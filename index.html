@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0b0b"><meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="no-referrer"><title>Doppler Radio · DJ spotlights</title><style>
+:root{color-scheme:dark;background:#0b0b0b;color:#fafafa;font:16px/1.5 "Helvetica Neue",Arial,sans-serif}body{margin:0}main{max-width:52rem;margin:15vh auto;padding:0 24px}h1{font-size:clamp(32px,7vw,70px);letter-spacing:-.05em;line-height:1.05}p{color:#aaa}button{font:inherit;padding:8px 18px}
+</style></head><body><main><strong>Doppler Radio</strong><h1>DJ spotlights</h1><p id="status" role="status">Open the full review link from Paul to see the interviews.</p><button hidden id="retry" onclick="location.reload()">Try again</button></main><script>
+(async () => {
+ const match=location.hash.match(/^#([A-Za-z0-9_-]{43})(?:~[^#]*)?$/);
+ if(!match)return;
+ const status=document.querySelector('#status');
+ status.textContent='Opening the interviews…';
+ try {
+  const raw=Uint8Array.from(atob(match[1].replace(/-/g,'+').replace(/_/g,'/')+'='),c=>c.charCodeAt(0));
+  const key=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
+  const response=await fetch('./reader.bin',{cache:'no-cache'});
+  if(!response.ok)throw new Error('load');
+  const data=new Uint8Array(await response.arrayBuffer());
+  const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:data.subarray(0,12)},key,data.subarray(12));
+  document.open();
+  document.write(new TextDecoder().decode(plain));
+  document.close();
+ } catch {
+  status.textContent='Couldn’t open the interviews. Check your connection and try the full link from Paul.';
+  document.querySelector('#retry').hidden=false;
+ }
+})();
+</script></body></html>
